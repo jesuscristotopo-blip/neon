@@ -451,6 +451,7 @@ const TRANSLATIONS = {
         NITRO: "NITRO",
         INITIALIZING: "INITIALIZING",
         CONNECTING: "CONNECTING TO GLOBAL ARENA...",
+        ESTABLISHING_LINK: "ESTABLISHING LINK...",
         OPTIMIZING: "OPTIMIZING ASSETS...",
         SYNCHRONIZING: "SYNCHRONIZING TEAM DATA...",
         COMPILING: "COMPILING SHADERS...",
@@ -547,6 +548,7 @@ const TRANSLATIONS = {
         NITRO: "NITRO",
         INITIALIZING: "INICIALIZANDO",
         CONNECTING: "CONECTANDO À ARENA GLOBAL...",
+        ESTABLISHING_LINK: "ESTABELECENDO CONEXÃO...",
         OPTIMIZING: "OTIMIZANDO ATIVOS...",
         SYNCHRONIZING: "SINCRONIZANDO DADOS DA EQUIPE...",
         COMPILING: "COMPILANDO SHADERS...",
@@ -954,7 +956,7 @@ export const NeonArena: React.FC = () => {
     audioService.init();
     setIsLoading(true);
     setLoadingProgress(0);
-    setLoadingText("ESTABLISHING LINK...");
+    setLoadingText(t.ESTABLISHING_LINK);
 
     // Simulate Loading & Optimization Sequence
     let progress = 0;
@@ -964,11 +966,11 @@ export const NeonArena: React.FC = () => {
         
         setLoadingProgress(progress);
 
-        if (progress < 20) setLoadingText("OPTIMIZING ASSETS...");
-        else if (progress < 40) setLoadingText("SYNCHRONIZING TEAM DATA...");
-        else if (progress < 60) setLoadingText("COMPILING SHADERS...");
-        else if (progress < 80) setLoadingText("CALIBRATING SENSORS...");
-        else setLoadingText("LAUNCHING COMBAT PROTOCOL...");
+        if (progress < 20) setLoadingText(t.OPTIMIZING);
+        else if (progress < 40) setLoadingText(t.SYNCHRONIZING);
+        else if (progress < 60) setLoadingText(t.COMPILING);
+        else if (progress < 80) setLoadingText(t.CALIBRATING);
+        else setLoadingText(t.LAUNCHING);
 
                 if (progress >= 100) {
             clearInterval(interval);
