@@ -451,7 +451,6 @@ const TRANSLATIONS = {
         NITRO: "NITRO",
         INITIALIZING: "INITIALIZING",
         CONNECTING: "CONNECTING TO GLOBAL ARENA...",
-        ESTABLISHING_LINK: "ESTABLISHING LINK...",
         OPTIMIZING: "OPTIMIZING ASSETS...",
         SYNCHRONIZING: "SYNCHRONIZING TEAM DATA...",
         COMPILING: "COMPILING SHADERS...",
@@ -548,7 +547,6 @@ const TRANSLATIONS = {
         NITRO: "NITRO",
         INITIALIZING: "INICIALIZANDO",
         CONNECTING: "CONECTANDO À ARENA GLOBAL...",
-        ESTABLISHING_LINK: "ESTABELECENDO CONEXÃO...",
         OPTIMIZING: "OTIMIZANDO ATIVOS...",
         SYNCHRONIZING: "SINCRONIZANDO DADOS DA EQUIPE...",
         COMPILING: "COMPILANDO SHADERS...",
@@ -720,15 +718,19 @@ export const NeonArena: React.FC = () => {
   const getDefaultLayout = (): HUDLayout => {
       if (typeof window === 'undefined') return { driveStick: {x:0,y:0}, fireStick: {x:0,y:0}, boostBtn: {x:0,y:0}, ability1Btn: {x:0,y:0}, ability2Btn: {x:0,y:0}, zoomSlider: {x:0,y:0}, powerStackBtn: {x:0,y:0} };
       const w = window.innerWidth; const h = window.innerHeight;
-      const isMobile = w < 768; const marginX = isMobile ? 30 : 40; const marginY = isMobile ? 30 : 40; const stickSize = 144;
+      const isMobile = w < 768; 
+      const marginX = isMobile ? 20 : 40; 
+      const marginY = isMobile ? 20 : 40; 
+      const stickSize = isMobile ? 96 : 144; // 24rem (96px) vs 36rem (144px)
+      
       return {
           driveStick: { x: marginX, y: h - marginY - stickSize }, 
           fireStick: { x: w - marginX - stickSize, y: h - marginY - stickSize }, 
-          boostBtn: { x: w - marginX - stickSize - 30, y: h - marginY - stickSize - 80 }, 
-          ability1Btn: { x: w - marginX - stickSize - 100, y: h - marginY - stickSize - 20 }, 
-          ability2Btn: { x: w - marginX - stickSize - 140, y: h - marginY - stickSize + 60 }, 
-          zoomSlider: { x: w - 50, y: h / 2 - 80 },
-          powerStackBtn: { x: w - marginX - stickSize - 30, y: h - marginY - stickSize - 160 }
+          boostBtn: { x: w - marginX - stickSize - (isMobile ? 20 : 30), y: h - marginY - stickSize - (isMobile ? 60 : 80) }, 
+          ability1Btn: { x: w - marginX - stickSize - (isMobile ? 70 : 100), y: h - marginY - stickSize - (isMobile ? 10 : 20) }, 
+          ability2Btn: { x: w - marginX - stickSize - (isMobile ? 100 : 140), y: h - marginY - stickSize + (isMobile ? 40 : 60) }, 
+          zoomSlider: { x: w - (isMobile ? 40 : 50), y: h / 2 - (isMobile ? 60 : 80) },
+          powerStackBtn: { x: w - marginX - stickSize - (isMobile ? 20 : 30), y: h - marginY - stickSize - (isMobile ? 120 : 160) }
       };
   };
 
@@ -739,6 +741,18 @@ export const NeonArena: React.FC = () => {
       }
       return getDefaultLayout();
   });
+  
+  // Handle Window Resize for Responsive HUD
+  useEffect(() => {
+      const handleResize = () => {
+          // Reset to default layout on resize to ensure elements stay on screen
+          // A more advanced version would scale coordinates, but reset is safer for now
+          setLayout(getDefaultLayout());
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const [dragTarget, setDragTarget] = useState<keyof HUDLayout | null>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -956,7 +970,7 @@ export const NeonArena: React.FC = () => {
     audioService.init();
     setIsLoading(true);
     setLoadingProgress(0);
-    setLoadingText(t.ESTABLISHING_LINK);
+    setLoadingText("ESTABLISHING LINK...");
 
     // Simulate Loading & Optimization Sequence
     let progress = 0;
@@ -966,11 +980,11 @@ export const NeonArena: React.FC = () => {
         
         setLoadingProgress(progress);
 
-        if (progress < 20) setLoadingText(t.OPTIMIZING);
-        else if (progress < 40) setLoadingText(t.SYNCHRONIZING);
-        else if (progress < 60) setLoadingText(t.COMPILING);
-        else if (progress < 80) setLoadingText(t.CALIBRATING);
-        else setLoadingText(t.LAUNCHING);
+        if (progress < 20) setLoadingText("OPTIMIZING ASSETS...");
+        else if (progress < 40) setLoadingText("SYNCHRONIZING TEAM DATA...");
+        else if (progress < 60) setLoadingText("COMPILING SHADERS...");
+        else if (progress < 80) setLoadingText("CALIBRATING SENSORS...");
+        else setLoadingText("LAUNCHING COMBAT PROTOCOL...");
 
                 if (progress >= 100) {
             clearInterval(interval);
@@ -1219,7 +1233,6 @@ export const NeonArena: React.FC = () => {
   const handleMoveJoystick = useCallback((x: number, y: number) => { state.current.input.moveX = x; state.current.input.moveY = y; }, []);
   const handleAimJoystick = useCallback((x: number, y: number) => { state.current.input.aimX = x; state.current.input.aimY = y; state.current.input.aimSource = 'joystick'; state.current.input.isShooting = Math.sqrt(x*x + y*y) > 0.1; }, []);
   const toggleBoost = (active: boolean) => { state.current.input.isBoosting = active; };
-
   const triggerAbility = (slot: 1 | 2) => {
       const p = state.current.player; const stats = getCarStats(p.typeIndex); const abilityType = slot === 1 ? stats.ability : stats.secondaryAbility;
       if (!abilityType) return;
@@ -1234,6 +1247,9 @@ export const NeonArena: React.FC = () => {
           if (activated) { if (slot === 1) { p.ability1Charges--; } else { p.ability2Charges--; } }
       }
   };
+
+  const handleAbility1 = () => triggerAbility(1);
+  const handleAbility2 = () => triggerAbility(2);
 
   const triggerEnergyPickup = (s: GameState, car: CarEntity, color: string) => {
       // Cinematic Effect: Set the swirl timer
@@ -5374,7 +5390,7 @@ export const NeonArena: React.FC = () => {
                                        type="text" 
                                        value={playerName} 
                                        onChange={(e) => setPlayerName(e.target.value.toUpperCase().slice(0, 10))}
-                                       className="bg-transparent border-b border-cyan-500/50 text-white font-black text-2xl outline-none w-48 placeholder-gray-700 focus:border-cyan-400 transition-colors"
+                                       className="bg-transparent border-b border-cyan-500/50 text-white font-black text-2xl outline-none w-32 md:w-48 placeholder-gray-700 focus:border-cyan-400 transition-colors"
                                     />
                                 </div>
                                 <button 
@@ -5470,13 +5486,13 @@ export const NeonArena: React.FC = () => {
                         {/* VISUALIZE TOGGLE */}
                         <button 
                              onClick={() => setIsVisualizing(true)}
-                             className="absolute top-24 right-4 pointer-events-auto bg-black/20 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/50 p-3 rounded-full transition-all backdrop-blur-sm group"
+                             className="absolute top-20 md:top-24 right-4 pointer-events-auto bg-black/20 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/50 p-3 rounded-full transition-all backdrop-blur-sm group"
                         >
                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:text-cyan-400"><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z"/></svg>
                         </button>
 
                         {/* CENTER HINT */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-24 pointer-events-none opacity-50 animate-pulse">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-20 md:mt-24 pointer-events-none opacity-50 animate-pulse">
                             <div className="text-cyan-500/50 text-[10px] tracking-[0.3em] font-bold border border-cyan-500/30 px-4 py-1 rounded-full bg-black/20 backdrop-blur-sm">
                                 {t.TAP_CAR_TO_TUNE}
                             </div>
@@ -5958,17 +5974,33 @@ export const NeonArena: React.FC = () => {
         {/* IN-GAME REACT HUD LAYER */}
         {isPlaying && !isPaused && !isSpectating && (
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                <VirtualJoystick onMove={handleMoveJoystick} color="cyan" style={{ left: layout.driveStick.x, top: layout.driveStick.y }} className="pointer-events-auto" />
-                <VirtualJoystick onMove={handleAimJoystick} color="red" style={{ left: layout.fireStick.x, top: layout.fireStick.y }} className="pointer-events-auto" />
+                <VirtualJoystick onMove={handleMoveJoystick} color="cyan" style={{ left: layout.driveStick.x, top: layout.driveStick.y }} className="pointer-events-auto w-24 h-24 md:w-36 md:h-36" />
+                <VirtualJoystick onMove={handleAimJoystick} color="red" style={{ left: layout.fireStick.x, top: layout.fireStick.y }} className="pointer-events-auto w-24 h-24 md:w-36 md:h-36" />
                 
                 {/* Action Buttons using Custom Layout */}
                 <button 
                     onPointerDown={() => toggleBoost(true)} onPointerUp={() => toggleBoost(false)} onPointerLeave={() => toggleBoost(false)}
                     onTouchStart={() => toggleBoost(true)} onTouchEnd={() => toggleBoost(false)}
-                    className="absolute w-16 h-16 rounded-full pointer-events-auto opacity-0"
+                    className="absolute w-16 h-16 md:w-20 md:h-20 rounded-full pointer-events-auto opacity-0"
                     style={{ left: layout.boostBtn.x, top: layout.boostBtn.y }}
                 >
                     <span className="text-[10px] font-bold text-yellow-400 absolute bottom-1 w-full text-center">{t.NITRO}</span>
+                </button>
+
+                <button 
+                    onPointerDown={() => handleAbility1()}
+                    className="absolute w-16 h-16 md:w-20 md:h-20 rounded-full pointer-events-auto opacity-0"
+                    style={{ left: layout.ability1Btn.x, top: layout.ability1Btn.y }}
+                >
+                    <span className="text-[10px] font-bold text-green-400 absolute bottom-1 w-full text-center">{t.ABIL_1}</span>
+                </button>
+
+                <button 
+                    onPointerDown={() => handleAbility2()}
+                    className="absolute w-16 h-16 md:w-20 md:h-20 rounded-full pointer-events-auto opacity-0"
+                    style={{ left: layout.ability2Btn.x, top: layout.ability2Btn.y }}
+                >
+                    <span className="text-[10px] font-bold text-orange-400 absolute bottom-1 w-full text-center">{t.ABIL_2}</span>
                 </button>
 
                 {/* Squad Status (For team modes) */}

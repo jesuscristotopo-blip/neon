@@ -18,7 +18,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({ onMove, label,
   // Track the specific touch ID controlling this joystick
   const touchIdRef = useRef<number | null>(null);
   
-  const maxRadius = 50; 
+  const [maxRadius, setMaxRadius] = useState(50);
 
   const updateStick = (clientX: number, clientY: number) => {
     if (!containerRef.current) return;
@@ -48,6 +48,14 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({ onMove, label,
     onMove(0, 0);
     touchIdRef.current = null;
   };
+
+  useEffect(() => {
+      if (containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          // Set max radius to roughly 35% of the container width (leaving space for padding/border)
+          setMaxRadius(Math.min(rect.width, rect.height) * 0.35);
+      }
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
